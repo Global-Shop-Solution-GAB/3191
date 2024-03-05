@@ -1,0 +1,74 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'enm for change parts
+'6/14/2010 delivered
+'7/13/2010 added copy feature for Comments on the links
+'used with Hook 17301
+V.Local.sQuote.Declare(String)
+V.Local.iQID.Declare(Long)
+V.Local.sSO.Declare(String)
+V.Local.iSID.Declare(Long)
+V.Local.bRet.Declare(Boolean)
+V.Local.sText.Declare(String)
+V.Local.sSQL.Declare(String)
+V.Local.sNote.Declare(String)
+
+V.Local.sQuote.Set(V.Passed.QUOTE)
+V.Local.sSO.Set(V.Passed.ORDER)
+
+F.Global.DocumentControl.CreateReference(V.Local.sQuote,"50",V.Local.iQID)
+F.Intrinsic.Debug.setLA("Quote ID ",V.Local.iQID)
+'F.Intrinsic.UI.Msgbox(V.Local.iQID)
+F.Global.DocumentControl.CreateReference(V.Local.sSO,"45",V.Local.iSID)
+F.Intrinsic.Debug.SetLA("SO ID",V.Local.iSID)
+'F.Intrinsic.UI.Msgbox(V.Local.iSID)
+F.Global.DocumentControl.copy(V.Local.iQID,V.Local.iSID,V.Local.bRet)
+F.ODBC.Connection!con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+F.Intrinsic.String.Concat("Select * from LINK_Note where LINK_ID=",V.Local.iQID,"",V.Local.sSql)
+F.ODBC.Connection!con.OpenRecordsetRO("rstQ",V.Local.sSQL)
+F.Intrinsic.control.If(V.ODBC.con!rstQ.EOF,=,False)
+	F.Intrinsic.String.Concat("Select * from Link_Note where Link_ID=",V.Local.iSID,"",V.Local.sSQL)
+	F.ODBC.Connection!con.OpenRecordsetRW("rstSO",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.con!rstSO.EOF,=,True)
+		F.ODBC.con!rstSO.AddNew
+		F.ODBC.con!rstSO.Set!Link_ID(V.Local.iSID)
+		V.Local.sNote.Set(V.ODBC.con!rstSO.FieldVal!Note)
+	F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.If(V.Local.sNote,<>,"")
+		F.Intrinsic.String.Concat(V.Local.sNote,V.Ambient.NewLine,V.ODBC.con!rstQ.FieldVal!Note,V.Local.sNote)
+		F.ODBC.con!rstSO.set!Note(V.Local.sNote)
+	F.Intrinsic.Control.Else
+		F.ODBC.con!rstSO.Set!Note(V.ODBC.con!rstQ.FieldVal!Note)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.con!rstSO.Set!Info0("")
+	F.ODBC.con!rstSO.Set!Info1("")
+	F.ODBC.con!rstSO.Set!Info2("")
+	F.ODBC.con!rstSO.Set!Info3("")
+	F.ODBC.con!rstSO.Set!Info4("")
+	F.ODBC.con!rstSO.Set!Info5("")
+	F.ODBC.con!rstSO.Set!Info6("")
+	F.ODBC.con!rstSO.Set!Info7("")
+	F.ODBC.con!rstSO.Update
+	F.ODBC.con!rstQ.Close
+	F.ODBC.con!rstSO.Close
+F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.If(V.Local.bRet,=,True)
+	F.Intrinsic.String.Concat("Quote ",V.Local.sQuote," links have been moved to Sales Order ",V.Local.sSO," links",V.Local.sText)
+	F.Intrinsic.UI.Msgbox(V.Local.sText)
+	F.Intrinsic.Debug.SetLA(V.Local.sText)
+F.Intrinsic.Control.Else
+	F.Intrinsic.String.Concat("Quote ",V.Local.sQuote," links were not moved to Sales Order ",V.Local.sSO," links",V.Local.sText)
+	F.Intrinsic.UI.Msgbox(V.Local.sText)
+	F.Intrinsic.Debug.SetLA(V.Local.sText)
+F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.End
+
+Program.Sub.Main.End
+
+
